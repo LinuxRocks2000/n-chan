@@ -1,0 +1,13 @@
+[package]
+name = "n-chan"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+maud = { version = "*", features = ["actix-web"] }
+actix-web = "*"
+actix-files = "*"
+rusqlite = { version = "0.34.0", features = ["bundled"] }
+actix-multipart = "0.7.0"
+futures-util = "*"
+chrono = "*"
