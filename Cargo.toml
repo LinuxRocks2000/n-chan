@@ -11,3 +11,6 @@ rusqlite = { version = "0.34.0", features = ["bundled"] }
 actix-multipart = "0.7.0"
 futures-util = "*"
 chrono = "*"
+serde_json = "*"
+serde = "*"
+serde_derive = "*"

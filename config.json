@@ -1,0 +1,37 @@
+{
+	"title": "N-CHAN: THE BEST IMAGEBOARD",
+	"banner": "widebanner.png",
+	"icon": "yotsubm.png",
+	"database": "data/n-chan.db",
+	"images": "data/images",
+	"default_boards": [
+		{
+			"name": "gon",
+			"subject": "n-gon shit"
+		},
+		{
+			"name": "cad",
+			"subject": "haha fuck solidworks"
+		},
+		{
+			"name": "po",
+			"subject": "das realpolitik"
+		},
+		{
+			"name": "yaoi",
+			"subject": "men kissing"
+		},
+		{
+			"name": "yuri",
+			"subject": "the most sinful shit ever"
+		},
+		{
+			"name": "tttt",
+			"subject": "i have no idea what this is"
+		},
+		{
+			"name": "mu",
+			"subject": "music! yippee!"
+		}
+	]
+}

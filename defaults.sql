@@ -6,6 +6,6 @@ INSERT INTO boards VALUES ('po', 'its like yaoi megathread but for fags', 2);
 INSERT INTO boards VALUES ('yaoi', 'delicious men', 3);
 INSERT INTO boards VALUES ('yuri', 'posting here will get you permabanned', 4);
 INSERT INTO boards VALUES ('tttt', 'idfk', 5);
-INSERT INTO boards VALUES ('mu', 'the fucking tunnnnesssss', 5);
+INSERT INTO boards VALUES ('mu', 'the fucking tunnnnesssss', 6);
 
 INSERT INTO users VALUES ('admin', 'changeme', 100); /* create a default admin user with full access rights and a changeme password (fucking change it you retards) */
