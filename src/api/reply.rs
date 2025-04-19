@@ -14,7 +14,7 @@ async fn reply_to_post(data: web::Data<AppState>, path : web::Path<(i64, i64)>, 
     let image = if let Some(name) = form.image.file_name {
         if name != "" {
             let name = format!("{}-{}", get_utc(), name);
-            form.image.file.persist(format!("{}/{}", data.config.images, name)).map_err(|_| RenderError::FilesystemError)?;
+            std::fs::copy(form.image.file.path(), format!("{}/{}", data.config.images, name)).map_err(|_| RenderError::FilesystemError)?;
             Some(name)
         }
         else { None }
