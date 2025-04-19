@@ -21,5 +21,7 @@ pub struct Config {
 
 
 pub fn get_config() -> Config {
-    serde_json::from_reader(std::fs::File::open("config.json").unwrap()).unwrap()
+    let cnf : Config = serde_json::from_reader(std::fs::File::open("config.json").unwrap()).unwrap();
+    std::fs::create_dir_all(&cnf.images).unwrap();
+    cnf
 }
