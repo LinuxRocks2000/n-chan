@@ -10,7 +10,7 @@ pub fn post(p : Post, inner : Markup, where_am_i : Identifier) -> Markup {
     html!{
         div class="post" {
             @if let Some(image) = p.image {
-                a href={"/img/" (image)} style={"background-image: url(/img/" (image) ")" } {}
+                a href={"/img/" (image)} style={"background-image: url(\"/img/" (image) "\")" } {}
             }
             (fragments::user(p.username))
             br;

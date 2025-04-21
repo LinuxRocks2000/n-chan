@@ -9,7 +9,7 @@ pub fn reply(r : Post) -> Markup {
     html!{
         div class="reply" {
             @if let Some(image) = r.image {
-                a href={"/img/" (image)} style={"background-image: url(/img/" (image) ")" } {}
+                a href={"/img/" (image)} style={"background-image: url(\"/img/" (image) "\")" } {}
             }
             (fragments::user(r.username))
             br;
