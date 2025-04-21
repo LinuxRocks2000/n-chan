@@ -81,12 +81,28 @@ impl Post {
         }
     }
 
+    pub fn get_one_post(conn : &rusqlite::Connection, id : Identifier) -> Result<Post, QueryError> {
+        match id {
+            Identifier::Post(i) => {
+                let mut stmt = conn.prepare("SELECT * FROM posts WHERE id=?1 LIMIT 1").map_err(QueryError::SqlError)?;
+                let mut rows = stmt.query_map([i.to_string()], Post::post_map(Identifier::Post)).map_err(QueryError::SqlError)?;
+                if let Some(row) = rows.next() {
+                    row.map_err(QueryError::SqlError)
+                }
+                else {
+                    Err(QueryError::NoResults)
+                }
+            },
+            _ => Err(QueryError::BadIdent(id))
+        }
+    }
+
     pub fn get_from_board(conn : &rusqlite::Connection, id : Identifier, page : i64) -> Result<Vec<Post>, QueryError> {
         match id {
             Identifier::Board(id) => {
-                let mut stmt = conn.prepare("SELECT * FROM posts WHERE board=?1 ORDER BY time DESC LIMIT 50 OFFSET ?2").map_err(QueryError::SqlError)?;
-                let rows = stmt.query_map([id.to_string(), (page * 50).to_string()], Post::post_map(Identifier::Post)).map_err(QueryError::SqlError)?;
-                let mut result = Vec::with_capacity(50);
+                let mut stmt = conn.prepare(&format!("SELECT * FROM posts WHERE board=?1 ORDER BY time DESC LIMIT {} OFFSET ?2", crate::BOARD_PAGE_SIZE)).map_err(QueryError::SqlError)?;
+                let rows = stmt.query_map([id.to_string(), (page * crate::BOARD_PAGE_SIZE).to_string()], Post::post_map(Identifier::Post)).map_err(QueryError::SqlError)?;
+                let mut result = Vec::with_capacity(crate::BOARD_PAGE_SIZE as usize);
                 for row in rows {
                     result.push(row.unwrap());
                 }
@@ -97,12 +113,28 @@ impl Post {
         }
     }
 
-    pub fn get_replies(&self, conn : &rusqlite::Connection, page : i64) -> Result<Vec<Post>, QueryError> {
+    pub fn get_replies(&self, conn : &rusqlite::Connection, count : i64) -> Result<Vec<Post>, QueryError> {
         match self.id {
             Identifier::Post(id) => {
-                let mut stmt = conn.prepare("SELECT * FROM replies WHERE post=?1 ORDER BY time DESC LIMIT 20 OFFSET ?2").map_err(QueryError::SqlError)?;
-                let rows = stmt.query_map([id.to_string(), (page * 20).to_string()], Post::post_map(Identifier::Reply)).map_err(QueryError::SqlError)?;
-                let mut result = Vec::with_capacity(20);
+                let mut stmt = conn.prepare("SELECT * FROM replies WHERE post=?1 ORDER BY time DESC LIMIT ?2").map_err(QueryError::SqlError)?;
+                let rows = stmt.query_map([id.to_string(), count.to_string()], Post::post_map(Identifier::Reply)).map_err(QueryError::SqlError)?;
+                let mut result = Vec::with_capacity(count as usize);
+                for row in rows {
+                    result.push(row.unwrap());
+                }
+                Ok(result)
+            },
+            Identifier::Board(_) => Err(QueryError::BadIdent(self.id)),
+            Identifier::Reply(_) => Err(QueryError::BadIdent(self.id))
+        }
+    }
+
+    pub fn get_all_replies(&self, conn : &rusqlite::Connection) -> Result<Vec<Post>, QueryError> {
+        match self.id {
+            Identifier::Post(id) => {
+                let mut stmt = conn.prepare("SELECT * FROM replies WHERE post=?1 ORDER BY time DESC").map_err(QueryError::SqlError)?;
+                let rows = stmt.query_map([id.to_string()], Post::post_map(Identifier::Reply)).map_err(QueryError::SqlError)?;
+                let mut result = Vec::new();
                 for row in rows {
                     result.push(row.unwrap());
                 }
@@ -180,6 +212,18 @@ impl Board {
         let mut stmt = db.prepare("SELECT * FROM boards WHERE id=?1 LIMIT 1").map_err(QueryError::SqlError)?;
         let mut rows = stmt.query_map([id.unwrap().to_string()], Self::board_map).map_err(QueryError::SqlError)?;
         rows.next().ok_or(QueryError::NoResults)?.map_err(QueryError::SqlError)
+    }
+
+    pub fn get_by_name(db : &rusqlite::Connection, name : String) -> Result<Board, QueryError> {
+        let mut stmt = db.prepare("SELECT * FROM boards WHERE name=?1 LIMIT 1").map_err(QueryError::SqlError)?;
+        let mut rows = stmt.query_map([name], Self::board_map).map_err(QueryError::SqlError)?;
+        rows.next().ok_or(QueryError::NoResults)?.map_err(QueryError::SqlError)
+    }
+
+    pub fn count_boards(db : &rusqlite::Connection) -> Result<usize, QueryError> {
+        let mut stmt = db.prepare("SELECT COUNT(*) FROM boards").map_err(QueryError::SqlError)?;
+        let mut rows = stmt.query([]).map_err(QueryError::SqlError)?;
+        rows.next().map_err(QueryError::SqlError)?.ok_or(QueryError::NoResults)?.get(0).map_err(QueryError::SqlError)
     }
 }
 

@@ -8,9 +8,9 @@ use crate::RenderError;
 use crate::queries::*;
 
 
-#[post("/reply/{id}/{board}")]
-async fn reply_to_post(data: web::Data<AppState>, path : web::Path<(i64, i64)>, MultipartForm(form) : MultipartForm<PostForm>) -> AwResult<Markup> {
-    let (post_id, board_id) = path.into_inner();
+#[post("/reply/{id}/{target}/{tid}")]
+async fn reply_to_post(data: web::Data<AppState>, path : web::Path<(i64, String, i64)>, MultipartForm(form) : MultipartForm<PostForm>) -> AwResult<Markup> {
+    let (post_id, target, tid) = path.into_inner();
     let image = if let Some(name) = form.image.file_name {
         if name != "" {
             let name = format!("{}-{}", get_utc(), name);
@@ -25,7 +25,12 @@ async fn reply_to_post(data: web::Data<AppState>, path : web::Path<(i64, i64)>, 
 
     Ok(
         html! {
-            meta http-equiv="refresh" content={"0; url=/b/" (board_id)};
+            @if target == "board" {
+                meta http-equiv="refresh" content={"0; url=/b/" (tid)};
+            }
+            @else {
+                meta http-equiv="refresh" content={"0; url=/post/" (tid)};
+            }
         }
     )
 }

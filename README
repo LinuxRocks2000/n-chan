@@ -1,3 +1,32 @@
-this is a really, really simple imageboard
-all it supports is posting on boards and replying to boards
-it's not really meant to be repurposed but if you feel like it and know rust, it's only like 300loc
+# N-Chan
+N-Chan is open source imageboard software designed to mimic popular boards like 4chan, without the hassle of Vichan.
+
+N-Chan is written in Rust. This means setting up an n-chan instance is as simple as doing cargo build!
+
+... Well, not quite. N-Chan is actually quite good at managing its own environment, but you *will* need a config.json file.
+Config.json contains a description of your "fresh" install (default boards, default users, etc), as well as a bunch of metadata (sqlite database,
+image storage path, etc). Create your config.json file and fill it with the defaults from config.json.demo - tweak as needed.
+
+You'll also need a logo and a site banner. These are just PNG images, with filenames specified in config.json. Make sure the images with the
+correct filenames are stored in the static directory.
+
+There's a Dockerfile that builds an N-Chan docker image. You can run this out of the box, after setting up your config.json and making
+changes to the static directory.
+
+## How should I set up volumes?
+You can do this however you want, really. It's recommended to set `images` (the directory uploaded images are stored in) and `database` (the sqlite database
+filename) inside a `data` directory, and then mount `data` to a persistent volume. This is how I do it. N-Chan is smart enough to create the necessary
+files under `data`, so you can mount the volume without additional steps.
+
+## What's with the yotsuba stuff in the default site config?
+it's... it's a long story
+
+## [thing] doesn't work! halp!
+Submit an issue.
+
+## [thing] still doesn't work! halp!
+Frankly, N-Chan is beta software at best. If you know Rust, you can probably fix it yourself! If you don't, you should use some other software.
+Maybe LynxChan? Or Vichan?
+
+## [feature] doesn't exist! halp!
+write it yourself.

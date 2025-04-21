@@ -30,19 +30,18 @@ h1, #desc {
   margin-right: auto;
   margin-top: 100px;
   margin-bottom: 100px;
+  padding: 10px;
 }
 
 .post > a, .reply > a {
   width: 100px;
-  max-height: 100px;
+  height: 100px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
   float: left;
   display: inline-block;
   margin: 10px;
-}
-
-a > img {
-  max-width: 100%;
-  max-height: 100%;
 }
 
 .postform {
@@ -55,9 +54,9 @@ a > img {
 
 .reply {
   background-color: white;
-  display: inline-block;
   padding: 10px;
   margin: 10px;
+  box-sizing: border-box;
 }
 
 .post, .reply {
@@ -83,4 +82,11 @@ a > img {
 .postbox > span {
   display: flex;
   justify-content: stretch;
+}
+
+.user {
+  background-color: darkblue;
+  font-family: monospace;
+  font-weight: bold;
+  color: white;
 }

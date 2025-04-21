@@ -1143,6 +1143,7 @@ dependencies = [
  "chrono",
  "futures-util",
  "maud",
+ "rand 0.8.5",
  "rusqlite",
  "serde",
  "serde_derive",

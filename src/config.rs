@@ -16,7 +16,8 @@ pub struct Config {
     pub icon : String,
     pub database : String,
     pub default_boards : Vec<BoardDescriptor>,
-    pub images : String // image dir
+    pub images : String, // image dir
+    pub admin_token : String
 }
 
 

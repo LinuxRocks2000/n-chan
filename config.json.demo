@@ -1,0 +1,22 @@
+{
+	"title": "My Imageboard",
+	"banner": "widebanner.png",
+	"icon": "yotsubm.png",
+	"database": "data/n-chan.db",
+	"images": "data/images",
+	"default_boards": [
+		{
+			"name": "meta",
+			"subject": "Talk about your imageboard!"
+		},
+		{
+			"name": "memes",
+			"subject": "All the funniest memes!"
+		},
+		{
+			"name": "linux",
+			"subject": "Everything Linux and computers!"
+		}
+	],
+	"admin_token" : "your admin password goes here"
+}
