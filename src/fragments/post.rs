@@ -3,28 +3,17 @@
 use maud::{ Markup, html };
 use crate::queries::Post;
 use crate::fragments;
-use crate::queries::Identifier;
 
 
-pub fn post(p : Post, inner : Markup, where_am_i : Identifier) -> Markup {
+pub fn post(p : Post, inner : Markup, location : i64, is_post_view : bool) -> Markup { // is_post_view: are we in a post page? if not, we're in a board
     html!{
         div class="post" {
-            @if let Some(image) = p.image {
-                a href={"/img/" (image)} style={"background-image: url(\"/img/" (image) "\")" } {}
-            }
+            a href={"/img/" (p.image)} style={"background-image: url(\"/img/" (p.image) "\")" } {}
             (fragments::user(p.username))
             br;
             (p.content)
             br; br;
-            (fragments::post_box(&format!("/reply/{}/{}/{}", p.id.unwrap(), match where_am_i {
-                Identifier::Board(_) => "board",
-                Identifier::Post(_) => "post",
-                _ => ""
-            }, match where_am_i {
-                Identifier::Board(_) => p.target.unwrap(),
-                Identifier::Post(_) => p.id.unwrap(),
-                _ => 0
-            }), "replyform"))
+            (fragments::post_box(&format!("/reply/{}/{}/{}", p.id, if is_post_view { "post" } else { "board" }, location), "replyform"))
             (inner)
         }
     }

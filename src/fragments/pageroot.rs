@@ -1,10 +1,9 @@
-use rusqlite::Connection;
 use crate::Config;
 use maud::{Markup, html, DOCTYPE};
 use crate::RenderError;
 
 
-pub fn pageroot(db : &Connection, config : &Config, content : impl maud::Render) -> Result<Markup, RenderError> {
+pub async fn pageroot(db : &crate::WeldsClient, config : &Config, content : impl maud::Render) -> Result<Markup, Box<dyn std::error::Error>> {
     Ok(html! {
         (DOCTYPE)
         html {
@@ -14,7 +13,7 @@ pub fn pageroot(db : &Connection, config : &Config, content : impl maud::Render)
                 link rel="icon" href={"/res/" (config.icon.clone()) };
             }
             body {
-                (crate::fragments::top(db, config.banner.clone())?)
+                (crate::fragments::top(db, config.banner.clone()).await?)
                 (content)
                 script src="/res/main.js" {}
             }

@@ -6,6 +6,7 @@ use actix_multipart::form::MultipartForm;
 use crate::get_utc;
 use crate::RenderError;
 use crate::queries::*;
+use welds::WeldsError;
 
 
 #[post("/reply/{id}/{target}/{tid}")]
@@ -20,8 +21,8 @@ async fn reply_to_post(data: web::Data<AppState>, path : web::Path<(i64, String,
         else { None }
     } else { None };
 
-    let post = Post::new_reply(form.username.into_inner(), form.content.into_inner(), image, Identifier::Post(post_id));
-    post.send(&*data.db.lock().map_err(|_| RenderError::MutexingFailure)?)?;
+    let mut reply = Reply::new_reply(form.username.into_inner(), form.content.into_inner(), image, post_id);
+    reply.save(&data.welds).await.map_err(|e| <WeldsError as Into<Box<dyn std::error::Error>>>::into(e))?;
 
     Ok(
         html! {

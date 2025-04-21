@@ -3,21 +3,13 @@ use serde_derive::{Deserialize, Serialize};
 
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct BoardDescriptor {
-    pub name : String,
-    pub subject : String
-}
-
-
-#[derive(Serialize, Deserialize, Clone)]
 pub struct Config {
     pub title : String,
     pub banner : String,
     pub icon : String,
     pub database : String,
-    pub default_boards : Vec<BoardDescriptor>,
     pub images : String, // image dir
-    pub admin_token : String
+    pub new_user_token : Option<String> // if this board doesn't allow public user creation...
 }
 
 

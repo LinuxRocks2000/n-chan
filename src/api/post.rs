@@ -6,6 +6,7 @@ use actix_multipart::form::MultipartForm;
 use crate::get_utc;
 use crate::RenderError;
 use crate::queries::*;
+use welds::{ WeldsError, prelude::* };
 
 
 #[post("/post/{id}")]
@@ -17,8 +18,8 @@ pub async fn new_post(data: web::Data<AppState>, path : web::Path<(i64, )>, Mult
         }
         let image = format!("{}-{}", get_utc(), image);
         std::fs::copy(form.image.file.path(), format!("{}/{}", data.config.images, image)).map_err(|_| RenderError::FilesystemError)?;
-        let post = Post::new_post(form.username.into_inner(), form.content.into_inner(), Some(image), Identifier::Board(board_id));
-        post.send(&*data.db.lock().map_err(|_| RenderError::MutexingFailure)?)?;
+        let mut post = Post::new_post(form.username.into_inner(), form.content.into_inner(), image, board_id);
+        post.save(&data.welds).await.map_err(|e| <WeldsError as Into<Box<dyn std::error::Error>>>::into(e))?;
     }
     Ok(
         html! {

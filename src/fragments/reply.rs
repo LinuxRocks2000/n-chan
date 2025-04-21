@@ -1,11 +1,11 @@
 // actual post rendered on either a board or
 // on a /post/ page
 use maud::{ Markup, html };
-use crate::queries::Post;
+use crate::queries::Reply;
 use crate::fragments;
 
 
-pub fn reply(r : Post) -> Markup {
+pub fn reply(r : Reply) -> Markup {
     html!{
         div class="reply" {
             @if let Some(image) = r.image {

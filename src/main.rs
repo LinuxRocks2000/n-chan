@@ -5,8 +5,10 @@ pub const BOARD_PAGE_SIZE : i64 = 20;
 use actix_web::{get, web, App, HttpServer, Result as AwResult};
 use maud::{html, Markup};
 use std::io;
-use rusqlite::{Connection, Result};
 use std::sync::{Arc, Mutex};
+use welds::connections::any::AnyClient as WeldsClient;
+
+mod migrations;
 
 mod queries;
 use queries::*;
@@ -27,7 +29,6 @@ pub fn get_utc() -> i64 {
 
 #[derive(Debug)]
 pub enum RenderError {
-    QueryFailure(QueryError),
     MutexingFailure,
     FilesystemError,
     BadImage
@@ -35,7 +36,6 @@ pub enum RenderError {
 
 
 impl actix_web::error::ResponseError for RenderError {}
-impl actix_web::error::ResponseError for queries::QueryError {}
 
 
 impl std::fmt::Display for RenderError {
@@ -47,39 +47,39 @@ impl std::fmt::Display for RenderError {
 impl std::error::Error for RenderError {}
 
 
-fn gen_post(db : &Connection, post : Post) -> Result<Markup, RenderError> {
-    let replies = post.get_replies(db, 3).map_err(RenderError::QueryFailure)?;
-    let num = post.id.unwrap();
+async fn gen_post(db : &WeldsClient, post : Post, board : i64) -> Result<Markup, Box<dyn std::error::Error>> {
+    let replies = post.get_replies(db, Some((3, 0))).await?;
+    let num = post.id;
     Ok(fragments::post(post, html!{
         @for reply in replies {
             br;
             (fragments::reply(reply))
         }
         i { a href={"/post/" (num) } {"see all replies"} }
-    }, Identifier::Board(-1)))
+    }, board, false))
 }
 
 
 #[get("/post/{id}")]
 async fn view_post(data : web::Data<AppState>, path : web::Path<(i64,)>) -> AwResult<Markup> {
     let (post_id,) = path.into_inner();
-    let post = Post::get_one_post(&*data.get_db()?, Identifier::Post(post_id))?;
-    let replies = post.get_all_replies(&*data.get_db()?)?;
-    Ok(fragments::pageroot(&*data.get_db()?, &data.config, html! {
+    let post = Post::get_one_post(&data.welds, post_id).await?;
+    let replies = post.get_replies(&data.welds, None).await?;
+    Ok(fragments::pageroot(&data.welds, &data.config, html! {
         h1 {"/post/" (post_id) "/"}
-        p style="text-align: center" { a href={"/b/" (post.target.unwrap())} {"back"} }
+        p style="text-align: center" { a href={"/b/" (post.board)} {"back"} }
         (fragments::post(post, html! {
             @for reply in replies {
                 (fragments::reply(reply))
             }
-        }, Identifier::Post(post_id)))
-    })?)
+        }, post_id, true))
+    }).await?)
 }
 
 
 #[get("/")]
 async fn index(data: web::Data<AppState>) -> AwResult<Markup> {
-    Ok(fragments::pageroot(&*data.get_db()?, &data.config, html! {
+    Ok(fragments::pageroot(&data.welds, &data.config, html! {
         h1 { "Welcome to " (data.config.title) "!" }
         p { "This is an instance of " a href="https://github.com/LinuxRocks2000/n-chan" {"n-chan"} ". Check out some boards!"}
         p {
@@ -92,19 +92,18 @@ async fn index(data: web::Data<AppState>) -> AwResult<Markup> {
              b { "rules" } br;
              "don't post in /yuri/. don't impersonate weirdpusheen. don't malign the holy word of yotsuba."
         }
-    })?)
+    }).await?)
 }
 
 async fn board(data: web::Data<AppState>, board_id : i64, page : i64) -> AwResult<Markup> {
-    let board = Board::get_one_board(&*data.get_db()?, Identifier::Board(board_id))?;
+    let board = Board::get_one_board(&data.welds, board_id).await?;
     let out = {
-        let db = &*data.get_db()?;
-        let posts = Post::get_from_board(db, queries::Identifier::Board(board_id), page)?;
+        let posts = Post::get_from_board(&data.welds, board_id, page).await?;
         html!{
             h1 { "/" (board.name) "/" @if page != 0 { (page) "/" } }
             p id="desc" {
                 i {
-                    (board.topic)
+                    (board.desc)
                 }
             }
             p style="text-align: center;" {
@@ -124,7 +123,7 @@ async fn board(data: web::Data<AppState>, board_id : i64, page : i64) -> AwResul
             }
             @if posts.len() > 0 {
                 @for post in posts {
-                    ({ gen_post(db, post)? })
+                    ({ gen_post(&data.welds, post, board_id).await? })
                 }
             }
             @else {
@@ -133,7 +132,7 @@ async fn board(data: web::Data<AppState>, board_id : i64, page : i64) -> AwResul
         }
     };
     Ok(
-        fragments::pageroot(&*data.get_db()?, &data.config, out)?
+        fragments::pageroot(&data.welds, &data.config, out).await?
     )
 }
 
@@ -154,11 +153,11 @@ async fn board_by_name(data: web::Data<AppState>, path : web::Path<(String, )>) 
     let (name, ) = path.into_inner();
     let id = if name == "rand" {
         let mut rng = rand::thread_rng();
-        rng.gen_range(0..Board::count_boards(&*data.get_db()?)?)
+        rng.gen_range(0..Board::count_boards(&data.welds).await?)
     }
     else {
-        let brd = Board::get_by_name(&*data.get_db()?, name)?;
-        brd.id.unwrap() as usize
+        let brd = Board::get_by_name(&data.welds, name).await?;
+        brd.id
     };
     Ok(
         html! {
@@ -169,15 +168,8 @@ async fn board_by_name(data: web::Data<AppState>, path : web::Path<(String, )>) 
 
 #[derive(Clone)]
 struct AppState {
-    db : Arc<Mutex<Connection>>,
-    config : Config
-}
-
-
-impl AppState {
-    fn get_db<'a>(&'a self) -> Result<std::sync::MutexGuard<'a, Connection>, RenderError> {
-        Ok(self.db.lock().map_err(|_| RenderError::MutexingFailure)?)
-    }
+    config : Config,
+    welds : WeldsClient
 }
 
 
@@ -185,10 +177,13 @@ impl AppState {
 async fn main() -> io::Result<()> {
     let config = get_config();
     let image_dir = config.images.clone();
-    let db = get_database(&config);
+
+    let welds = welds::connections::connect(&config.database).await.unwrap();
+    migrations::up(&welds).await.unwrap();
+
     let state = AppState {
-        db : Arc::new(Mutex::new(db)),
-        config
+        config,
+        welds
     };
     HttpServer::new(move || App::new()
             .app_data(web::Data::new(state.clone()))
@@ -206,4 +201,3 @@ async fn main() -> io::Result<()> {
         .run()
         .await
 }
-

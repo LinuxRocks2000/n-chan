@@ -1,6 +1,5 @@
 // a standardized "post" box that calls out to an api
 use maud::{ Markup, html };
-use crate::queries::Identifier;
 
 
 pub fn post_box(action : &str, class : &str) -> Markup {
