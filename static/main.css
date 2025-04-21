@@ -22,8 +22,6 @@ h1, #desc {
 
 .post {
   background-color: rgb(255, 194, 121);
-  height: max-content;
-  min-height: 120px;
   width: 100%;
   max-width: 1000px;
   margin-left: auto;
@@ -34,14 +32,22 @@ h1, #desc {
 }
 
 .post > a, .reply > a {
-  width: 100px;
-  height: 100px;
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
   float: left;
   display: inline-block;
   margin: 10px;
+}
+
+.post > a {
+  width: 150px;
+  height: 150px;
+}
+
+.reply > a {
+  width: 100px;
+  height: 100px;
 }
 
 .postform {
@@ -61,6 +67,7 @@ h1, #desc {
 
 .post, .reply {
     white-space: pre-wrap;
+    display: flow-root;
 }
 
 .postbox {
