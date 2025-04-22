@@ -153,7 +153,7 @@ async fn board_by_name(data: web::Data<AppState>, path : web::Path<(String, )>) 
     let (name, ) = path.into_inner();
     let id = if name == "rand" {
         let mut rng = rand::thread_rng();
-        rng.gen_range(0..Board::count_boards(&data.welds).await?)
+        rng.gen_range(1..Board::count_boards(&data.welds).await?)
     }
     else {
         let brd = Board::get_by_name(&data.welds, name).await?;
